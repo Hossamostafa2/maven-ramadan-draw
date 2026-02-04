@@ -159,6 +159,22 @@ button{
 /* ===============================
    INIT DRAW
 ================================ */
+async function initDraw(){
+  const teamsInput = ["Team A", "Team B"];
+  const playersInput = ["Ahmed", "Ali", "Omar"];
+
+  const teamsObj = {};
+  teamsInput.forEach(t => teamsObj[t] = []);
+
+  await setDoc(doc(db,"event","state"), {
+    started: false,
+    finished: false,
+    remainingPlayers: playersInput,
+    lastPick: null,
+    teams: teamsObj
+  });
+
+  alert("Draw Initialized in Firebase");
 function initDraw(){
   const teams = document.getElementById("teamsInput").value
     .split("\n").map(t=>t.trim()).filter(Boolean);
