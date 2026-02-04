@@ -159,22 +159,6 @@ button{
 /* ===============================
    INIT DRAW
 ================================ */
-async function initDraw(){
-  const teamsInput = ["Team A", "Team B"];
-  const playersInput = ["Ahmed", "Ali", "Omar"];
-
-  const teamsObj = {};
-  teamsInput.forEach(t => teamsObj[t] = []);
-
-  await setDoc(doc(db,"event","state"), {
-    started: false,
-    finished: false,
-    remainingPlayers: playersInput,
-    lastPick: null,
-    teams: teamsObj
-  });
-
-  alert("Draw Initialized in Firebase");
 function initDraw(){
   const teams = document.getElementById("teamsInput").value
     .split("\n").map(t=>t.trim()).filter(Boolean);
@@ -201,7 +185,6 @@ function initDraw(){
 /* ===============================
    PICK PLAYER
 ================================ */
-
 function pickPlayer(){
   const raw = localStorage.getItem("DRAW_STATE");
   if(!raw){
@@ -308,48 +291,6 @@ function protectedRestart(){
 }
 </script>
 
-<script type="module">
-/* ===============================
-   FIREBASE INIT – ADMIN
-================================ */
-import { initializeApp } from
-  "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore,
-  doc,
-  setDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-/* 🔧 REPLACE WITH YOUR CONFIG */
-const firebaseConfig = {
-  apiKey: "AIzaSyA2kDRHbPh_gh6Bmij39LUKF1lBNhbfDxg",
-  authDomain: "maven-ramadan-draw.firebaseapp.com",
-  projectId: "maven-ramadan-draw"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-/* ▶️ START EVENT */
-window.startEvent = async function(){
-  await setDoc(doc(db,"event","state"), {
-    started: true,
-    ended: false
-  });
-  alert("Event Started – Viewer will redirect");
-};
-
-/* ⏹️ END EVENT */
-window.endEvent = async function(){
-  if(!confirm("End Event and return viewer to splash?")) return;
-
-  await setDoc(doc(db,"event","state"), {
-    started: false,
-    ended: true
-  });
-  alert("Event Ended");
-};
-</script>
 
 </body>
 </html>

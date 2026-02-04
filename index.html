@@ -166,38 +166,5 @@ if(localStorage.getItem("START_EVENT") === "true"){
 }
 </script>
 
-<script type="module">
-/* ===============================
-   FIREBASE LISTENER – VIEW
-================================ */
-import { initializeApp } from
-  "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore,
-  doc,
-  onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-/* 🔧 SAME CONFIG */
-const firebaseConfig = {
-  apiKey: "AIzaSyA2kDRHbPh_gh6Bmij39LUKF1lBNhbfDxg",
-  authDomain: "maven-ramadan-draw.firebaseapp.com",
-  projectId: "maven-ramadan-draw"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-/* 👂 LISTEN FOR EVENT STATE */
-onSnapshot(doc(db,"event","state"), (snap)=>{
-  if(!snap.exists()) return;
-
-  const data = snap.data();
-  if(data.started){
-    window.location.href = "spin.html";
-  }
-});
-</script>
-
 </body>
 </html>
