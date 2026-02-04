@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MAVEN Developments – Ramadan Tournament Draw</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+/* ===== RESET ===== */
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,Helvetica,sans-serif}
+
+/* ===== SPLASH ===== */
+.splash{
+  position:fixed;
+  inset:0;
+  background:#0C2340;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
+.splash-inner{
+  width:90%;
+  max-width:1200px;
+  display:grid;
+  grid-template-columns:1fr 1.2fr 1fr;
+  gap:30px;
+  align-items:center;
+}
+
+.splash-col{
+  opacity:0;
+  animation:enter 1s ease forwards;
+}
+.left{animation-delay:.2s}
+.center{animation-delay:.4s;text-align:center}
+.right{animation-delay:.6s}
+
+@keyframes enter{
+  from{opacity:0;transform:translateX(-40px)}
+  to{opacity:1;transform:translateX(0)}
+}
+
+/* ===== SPLASH CONTENT ===== */
+.left h1{color:#FA4C06;font-size:34px;letter-spacing:1px}
+.left h2{margin-top:6px;font-size:20px}
+.meta{margin-top:6px;color:#A7A8A9}
+
+/* COUNTDOWN */
+.countdown{
+  display:flex;
+  justify-content:center;
+  gap:18px;
+}
+.countdown div{
+  background:rgba(255,255,255,.08);
+  border-radius:14px;
+  padding:18px;
+  min-width:90px;
+}
+.countdown strong{
+  display:block;
+  font-size:36px;
+  color:#FA4C06;
+}
+.countdown span{font-size:13px;color:#A7A8A9}
+.soon{margin-top:12px;color:#A7A8A9;font-size:15px}
+
+/* PREVIOUS TOURNAMENTS */
+.card{
+  background:rgba(255,255,255,.06);
+  padding:18px;
+  border-radius:14px;
+}
+.card-title{color:#FA4C06;font-weight:bold;margin-bottom:14px}
+.season{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:12px;
+}
+.season img{
+  width:56px;
+  height:56px;
+  border-radius:10px;
+}
+.season small{color:#A7A8A9}
+
+/* ===== SPLASH EXIT (SMOOTH + BLUR) ===== */
+.splash.exit{
+  animation:exitSmoothBlur 1.3s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes exitSmoothBlur{
+  0%{opacity:1;transform:scale(1);filter:blur(0)}
+  30%{transform:scale(.98);filter:blur(1px)}
+  100%{
+    opacity:0;
+    transform:scale(.94) translateY(24px);
+    filter:blur(6px);
+    pointer-events:none;
+  }
+}
+
+/* ===== VIEWER (دايمًا ظاهر) ===== */
+#viewer{
+  min-height:100vh;
+  background:#f4f4f4;
+}
+
+/* مثال بسيط للهيدر */
+header{
+  padding:16px;
+  background:#0C2340;
+  text-align:center;
+}
+header h1{
+  color:#FA4C06;
+  font-size:22px;
+}
+
+#content{
+  padding:20px;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<!-- SPLASH -->
+<div id="splash" class="splash">
+  <div class="splash-inner">
+
+    <!-- LEFT -->
+    <div class="splash-col left">
+      <h1>MAVEN Developments</h1>
+      <h2>Ramadan Tournament Draw</h2>
+      <div class="meta">Season 6 • 📍 Cairo Sporting Club</div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="splash-col center">
+      <div class="countdown">
+        <div><strong id="d">0</strong><span>Days</span></div>
+        <div><strong id="h">0</strong><span>Hours</span></div>
+        <div><strong id="m">0</strong><span>Minutes</span></div>
+        <div><strong id="s">0</strong><span>Seconds</span></div>
+      </div>
+      <div class="soon">Event Starting Soon</div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="splash-col right">
+      <div class="card">
+        <div class="card-title">Previous Tournaments</div>
+
+        <div class="season">
+          <img src="season5.png">
+          <div>
+            <b>Season 5 – 2025</b>
+            <small>Champions: Team Falcons</small>
+          </div>
+        </div>
+
+        <div class="season">
+          <img src="season4.png">
+          <div>
+            <b>Season 4 – 2024</b>
+            <small>Champions: Team Lions</small>
+          </div>
+        </div>
+
+        <div class="season">
+          <img src="season3.png">
+          <div>
+            <b>Season 3 – 2023</b>
+            <small>Champions: Team Eagles</small>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- VIEWER (تحت الـ Splash دايمًا) -->
+<div id="viewer">
+  <header>
+    <h1>MAVEN Developments Ramadan Tournament Draw</h1>
+  </header>
+
+  <div id="content">
+    <!-- هنا العجلة والجداول -->
+    <p>Viewer is ready.</p>
+  </div>
+</div>
+
+<script>
+/* ===== COUNTDOWN (VISUAL ONLY) ===== */
+// عدّل التاريخ لو حابب
+const EVENT_DATE = new Date("2026-03-02T20:00:00+02:00");
+
+const splash = document.getElementById("splash");
+const d = document.getElementById("d");
+const h = document.getElementById("h");
+const m = document.getElementById("m");
+const s = document.getElementById("s");
+
+function updateCountdown(){
+  const now = new Date();
+  const diff = EVENT_DATE - now;
+
+  if(diff <= 0){
+    d.innerText = 0;
+    h.innerText = 0;
+    m.innerText = 0;
+    s.innerText = 0;
+    return;
+  }
+
+  d.innerText = Math.floor(diff / (1000*60*60*24));
+  h.innerText = Math.floor((diff / (1000*60*60)) % 24);
+  m.innerText = Math.floor((diff / (1000*60)) % 60);
+  s.innerText = Math.floor((diff / 1000) % 60);
+}
+
+setInterval(updateCountdown,1000);
+updateCountdown();
+
+/* ===== ADMIN CONTROL + REDIRECT ===== */
+
+let splashHidden = false;
+const SPIN_PAGE = "spin.html"; // 👈 اسم صفحة العجلة
+
+function startRedirect(){
+  if(splashHidden) return;
+  splashHidden = true;
+
+  // Animation خروج
+  splash.classList.add("exit");
+
+  // Redirect بعد الانيميشن
+  setTimeout(()=>{
+    window.location.href = SPIN_PAGE;
+  },1300);
+}
+
+/* 1️⃣ لو الأدمن في تاب تاني */
+window.addEventListener("storage",(e)=>{
+  if(e.key === "START_EVENT" && e.newValue === "true"){
+    startRedirect();
+  }
+});
+
+/* 2️⃣ Fallback (نفس التاب / نفس الصفحة) */
+setInterval(()=>{
+  if(localStorage.getItem("START_EVENT") === "true"){
+    startRedirect();
+  }
+},500);
+
+// لما نرجع من End Event
+if(!localStorage.getItem("START_EVENT")){
+  splash.style.display = "flex";
+}
+
+
+</script>
+
+</body>
+</html>

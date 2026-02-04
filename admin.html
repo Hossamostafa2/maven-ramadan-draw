@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MAVEN Admin – Live Draw</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#0C2340;
+  color:#fff;
+}
+header{
+  background:#0C2340;
+  padding:16px;
+  text-align:center;
+  border-bottom:3px solid #FA4C06;
+}
+header h1{
+  margin:0;
+  color:#FA4C06;
+}
+main{
+  padding:20px;
+}
+.section{
+  margin-bottom:20px;
+}
+label{
+  display:block;
+  margin-bottom:6px;
+  color:#A7A8A9;
+}
+textarea{
+  width:100%;
+  min-height:120px;
+  padding:10px;
+  border-radius:6px;
+  border:none;
+}
+button{
+  padding:12px 18px;
+  margin:6px 6px 6px 0;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:14px;
+}
+.primary{
+  background:#FA4C06;
+  color:#fff;
+}
+.secondary{
+  background:#A7A8A9;
+  color:#0C2340;
+}
+.danger{
+  background:#c0392b;
+  color:#fff;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+
+<header style="
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 24px;
+  background:#0C2340;
+  border-bottom:3px solid #FA4C06;
+">
+
+  <!-- LEFT LOGO -->
+  <img src="logo-left.png"
+       style="
+         height:46px;
+         filter:
+           drop-shadow(0 0 2px #fff)
+           drop-shadow(0 4px 8px rgba(0,0,0,.4));
+       ">
+
+  <!-- TITLE -->
+  <h1 style="margin:0;color:#FA4C06;font-size:20px;">
+    MAVEN Admin Panel
+  </h1>
+
+  <!-- RIGHT LOGO -->
+  <img src="logo-right.png"
+       style="
+         height:46px;
+         filter:
+           drop-shadow(0 0 2px #fff)
+           drop-shadow(0 4px 8px rgba(0,0,0,.4));
+       ">
+
+
+</header>
+
+<main>
+
+  <!-- TEAMS -->
+  <div class="section">
+    <label>Teams (one per line)</label>
+    <textarea id="teamsInput" placeholder="Team A&#10;Team B&#10;Team C"></textarea>
+  </div>
+
+  <!-- PLAYERS -->
+  <div class="section">
+    <label>Players (one per line)</label>
+    <textarea id="playersInput" placeholder="Player 1&#10;Player 2&#10;Player 3"></textarea>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="section">
+    <button class="primary" onclick="initDraw()">Initialize Draw</button>
+    <button class="secondary" onclick="pickPlayer()">Pick Player</button>
+       <button class="primary" onclick="startEvent()">▶ Start Event</button>
+     <button class="danger" onclick="endEvent()">⏹ End Event</button>
+
+
+  </div>
+<!-- ADMIN STATUS -->
+<div id="adminStatus"
+     style="
+       margin-top:16px;
+       padding:14px;
+       background:rgba(255,255,255,.12);
+       border-radius:8px;
+       display:none;
+     ">
+  <div id="statusTitle"
+       style="font-size:18px;font-weight:bold;color:#FA4C06;">
+  </div>
+
+  <div id="statusDetails"
+       style="margin-top:6px;font-size:14px;color:#A7A8A9;">
+  </div>
+</div>
+
+  <!-- EXPORT / RESTART -->
+  <div class="section">
+    <button class="secondary" onclick="exportExcel()">Export Excel</button>
+    <button class="secondary" onclick="exportPDF()">Export PDF</button>
+    <button class="danger" onclick="protectedRestart()">Restart Draw</button>
+  </div>
+
+</main>
+
+<!-- LIBRARIES -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+<script>
+/* ===============================
+   INIT DRAW
+================================ */
+function initDraw(){
+  const teams = document.getElementById("teamsInput").value
+    .split("\n").map(t=>t.trim()).filter(Boolean);
+
+  const players = document.getElementById("playersInput").value
+    .split("\n").map(p=>p.trim()).filter(Boolean);
+
+  if(!teams.length || !players.length){
+    alert("Please enter teams and players");
+    return;
+  }
+
+  const state = {
+    teams: teams.map(t=>({ name:t, players:[] })),
+    remainingPlayers: players,
+    lastPick: null,
+    finished: false
+  };
+
+  localStorage.setItem("DRAW_STATE", JSON.stringify(state));
+  alert("Draw Initialized");
+}
+
+/* ===============================
+   PICK PLAYER
+================================ */
+function pickPlayer(){
+  const raw = localStorage.getItem("DRAW_STATE");
+  if(!raw){
+    alert("Initialize the draw first");
+    return;
+  }
+
+  const state = JSON.parse(raw);
+
+  const box = document.getElementById("adminStatus");
+  const title = document.getElementById("statusTitle");
+  const details = document.getElementById("statusDetails");
+  box.style.display = "block";
+
+  if(state.finished){
+    title.innerText = "🏁 DRAW FINISHED";
+    details.innerText = "The draw is already complete.";
+    return;
+  }
+
+  if(state.remainingPlayers.length === 0){
+    state.finished = true;
+    localStorage.setItem("DRAW_STATE", JSON.stringify(state));
+
+    title.innerText = "🏁 DRAW FINISHED";
+    details.innerText = "Last player assigned. Draw is complete.";
+    return;
+  }
+
+  /* 🎯 Random player */
+  const index = Math.floor(Math.random() * state.remainingPlayers.length);
+  const player = state.remainingPlayers.splice(index,1)[0];
+
+  /* ⚖️ Balanced teams */
+  state.teams.sort((a,b)=>a.players.length - b.players.length);
+  const team = state.teams[0];
+  team.players.push(player);
+
+  state.lastPick = {
+    player: player,
+    team: team.name
+  };
+
+  /* ✅ SHOW RESULT IN ADMIN */
+  title.innerText = "✅ PICK SUCCESS";
+  details.innerHTML =
+    `<strong>Player:</strong> ${player}<br>
+     <strong>Assigned to:</strong> ${team.name}`;
+
+  /* 🏁 لو ده آخر اختيار */
+  if(state.remainingPlayers.length === 0){
+    state.finished = true;
+
+    title.innerText = "🏁 DRAW FINISHED";
+    details.innerText = "Last player assigned. Draw is complete.";
+  /* ⭐ IMPORTANT PART */
+  if(state.remainingPlayers.length === 0){
+    state.finished = true;   // 👈 ده المفتاح
+  }
+  }
+
+  localStorage.setItem("DRAW_STATE", JSON.stringify(state));
+}
+
+  
+
+
+/* ===============================
+   START EVENT
+================================ */
+function startEvent(){
+  localStorage.setItem("START_EVENT","true");
+  alert("Event Started");
+}
+
+/* ===============================
+   END EVENT
+================================ */
+function endEvent(){
+  if(!confirm("End Event and return to splash?")) return;
+
+  localStorage.setItem("END_EVENT","true");
+  localStorage.removeItem("START_EVENT");
+}
+
+/* ===============================
+   PROTECTED RESTART
+================================ */
+function protectedRestart(){
+  const pass = prompt("Enter admin password");
+  if(pass !== "Hr@Maven2026"){
+    alert("Wrong password");
+    return;
+  }
+
+  if(!confirm("Reset everything?")) return;
+
+  localStorage.removeItem("DRAW_STATE");
+  localStorage.removeItem("START_EVENT");
+  localStorage.removeItem("END_EVENT");
+
+  alert("Draw reset");
+  location.reload();
+}
+</script>
+
+
+</body>
+</html>

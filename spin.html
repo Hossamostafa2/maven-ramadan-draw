@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MAVEN Live Draw</title>
+
+<style>
+/* PAGE */
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#A7A8A9;
+  color:#0C2340;
+  text-align:center;
+}
+
+
+/* HEADER */
+header{
+  position:relative;
+  background:#0C2340;
+  padding:16px 70px;
+  color:#fff;
+}
+header h1{ margin:0; color:#FA4C06; }
+header .sub{ color:#A7A8A9; margin-top:4px; }
+
+/* HEADER LOGOS */
+header img{
+  filter:
+    drop-shadow(0 0 2px #ffffff)
+    drop-shadow(0 0 6px rgba(255,255,255,.6))
+    drop-shadow(0 4px 8px rgba(0,0,0,.4));
+}
+
+.header-logo{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  width:56px;
+  opacity:0;
+  animation:fadeInLogo 1.4s ease forwards;
+}
+.header-logo.left{ left:18px; }
+.header-logo.right{ right:18px; }
+
+@keyframes fadeInLogo{
+  from{ opacity:0; transform:translateY(-50%) scale(.9); }
+  to{ opacity:1; transform:translateY(-50%) scale(1); }
+}
+
+/* PIN UNDER HEADER */
+#pin{
+  display:block;
+  margin:6px auto 2px auto;
+  width:44px;
+  transform:rotate(180deg);
+  pointer-events:none;
+  filter:
+    drop-shadow(0 0 3px #FA4C06)
+    drop-shadow(0 0 7px rgba(250,76,6,.6));
+}
+
+/* PIN ANIMATION */
+.pinFast{ animation:pinFast .12s infinite; }
+.pinSlow{ animation:pinSlow .35s infinite; }
+
+@keyframes pinFast{
+  0%{transform:rotate(180deg)}
+  50%{transform:rotate(150deg)}
+  100%{transform:rotate(180deg)}
+}
+@keyframes pinSlow{
+  0%{transform:rotate(180deg)}
+  50%{transform:rotate(168deg)}
+  100%{transform:rotate(180deg)}
+}
+
+/* SPIN AREA */
+#spinWrap{
+  position:relative;
+  width:320px;
+  height:320px;
+  margin:6px auto 22px auto;
+}
+
+/* WHEEL – GRAY + NAVY, EQUAL SEGMENTS + TEXTURE */
+#wheel{
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  background:
+    radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+    radial-gradient(rgba(0,0,0,.08) 1px, transparent 1px),
+    repeating-conic-gradient(
+      #8E9093 0deg 15deg,
+      #0C2340 15deg 30deg
+    );
+  background-size:6px 6px,6px 6px,auto;
+  background-position:0 0,3px 3px,center;
+  box-shadow:
+    0 0 0 8px #FA4C06,
+    0 0 35px rgba(250,76,6,.45);
+  transition:transform 2.6s cubic-bezier(.15,.75,.25,1);
+}
+
+/* ===== BACKGROUND VECTORS SAFE AREA ===== */
+
+/* layer */
+#bg-vectors{
+  position:fixed;
+  left:0;
+  right:0;
+  top:120px;        /* 👈 يبدأ بعد الهيدر */
+  bottom:0;         /* 👈 لحد آخر الصفحة */
+  pointer-events:none;
+  z-index:0;
+}
+
+/* common */
+.bg-vector{
+  position:absolute;
+  opacity:0.12;
+  height:auto;
+  filter:drop-shadow(0 6px 10px rgba(0,0,0,.25));
+}
+
+/* 🧍‍♂️ Player – LEFT SIDE */
+.bg-vector.player{
+  left:40px;                                  
+  top:50%;
+  transform:translateY(-50%);
+  max-width:clamp(140px, 18vw, 200px);
+  animation:playerFloat 14s ease-in-out infinite;
+}
+
+/* 🥅 Goal – RIGHT SIDE */
+.bg-vector.goal{
+  right:40px;                                
+  top:50%;
+  transform:translateY(-50%);
+  max-width:clamp(160px, 20vw, 230px);
+  animation:goalFloat 18s ease-in-out infinite;
+}
+
+/* LAST PICK */
+#lastPick{ margin:12px 0; }
+#playerName{
+  font-size:30px;
+  font-weight:bold;
+  color:#FA4C06;
+}
+#teamName{
+  font-size:18px;
+  color:#0C2340;
+}
+
+/* COUNTDOWN */
+#countdown{
+  display:none;
+  font-size:72px;
+  font-weight:bold;
+  color:#FA4C06;
+  margin:20px 0;
+  animation:countPulse 1s ease-in-out infinite;
+}
+@keyframes countPulse{
+  0%{transform:scale(1); opacity:.7}
+  50%{transform:scale(1.2); opacity:1}
+  100%{transform:scale(1); opacity:.7}
+}
+
+/* FINISHED */
+#finished{
+  display:none;
+  margin:24px 0;
+  color:#FA4C06;
+  font-size:38px;
+  font-weight:bold;
+}
+#trophy{
+  font-size:64px;
+  margin-bottom:8px;
+  animation:trophyIn 1.6s ease-out forwards;
+  filter:
+    drop-shadow(0 0 6px rgba(250,76,6,.7))
+    drop-shadow(0 0 16px rgba(250,76,6,.6));
+}
+@keyframes trophyIn{
+  0%{transform:scale(.3) translateY(-40px);opacity:0}
+  60%{transform:scale(1.15) translateY(10px);opacity:1}
+  100%{transform:scale(1) translateY(0)}
+}
+
+/* STARS */
+.stars{ margin-top:8px; }
+.stars span{
+  display:inline-block;
+  margin:0 4px;
+  font-size:20px;
+  animation:starFloat 1.6s ease-in-out infinite;
+}
+.stars span:nth-child(odd){ animation-delay:.3s; }
+@keyframes starFloat{
+  0%{opacity:0; transform:translateY(10px) scale(.6)}
+  50%{opacity:1; transform:translateY(-6px) scale(1)}
+  100%{opacity:0; transform:translateY(-14px) scale(.6)}
+}
+
+/* TEAMS */
+#teams{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:14px;
+  padding:18px;
+}
+.team{
+  background:#0C2340;
+  color:#fff;
+  padding:12px;
+  border-radius:8px;
+  transition:all .4s ease;
+}
+.team h3{ color:#FA4C06; }
+.team.highlight{
+  box-shadow:0 0 20px rgba(250,76,6,.8);
+  transform:scale(1.03);
+}
+
+/* FADE OUT */
+.fadeOut{
+  animation:fadeTeams .8s ease forwards;
+}
+@keyframes fadeTeams{
+  to{ opacity:0; transform:scale(.96); }
+}
+
+/* FREEZE FRAME */
+.freeze{
+  pointer-events:none;
+  filter:brightness(1.05);
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <img src="logo-left.png" class="header-logo left">
+  <img src="logo-right.png" class="header-logo right">
+  <h1>MAVEN Developments</h1>
+  <div class="sub">Ramadan Tournament Draw – Season 6</div>
+  <div class="sub">📍 Cairo Sporting Club</div>
+</header>
+
+<!-- BACKGROUND VECTORS -->
+<div id="bg-vectors">
+  <img src="./player-vector.png" class="bg-vector player" alt="">
+  <img src="./goal-vector.png" class="bg-vector goal" alt="">
+</div>
+
+
+<!-- PIN -->
+<img id="pin" src="maven-logo.png" alt="Pin">
+
+<!-- SPIN -->
+<div id="spinWrap"><div id="wheel"></div></div>
+
+<!-- LAST PICK -->
+<div id="lastPick">
+  <div id="playerName">Waiting for first pick...</div>
+  <div id="teamName"></div>
+</div>
+
+<!-- COUNTDOWN -->
+<div id="countdown"></div>
+
+<!-- FINISHED -->
+<div id="finished">
+  <div id="trophy">🏆</div>
+  <div>DRAW FINISHED</div>
+  <div class="stars">
+    <span>✨</span><span>✨</span><span>✨</span>
+    <span>✨</span><span>✨</span>
+  </div>
+</div>
+
+<!-- TEAMS -->
+<div id="teams"></div>
+
+<script>
+let lastPickedPlayer = "";
+let endSequenceStarted = false;
+
+setInterval(()=>{
+  const raw = localStorage.getItem("DRAW_STATE");
+  if(!raw) return;
+
+  const state = JSON.parse(raw);
+
+  // SPIN
+  if(state.lastPick && state.lastPick.player !== lastPickedPlayer){
+    pin.classList.remove("pinSlow");
+    pin.classList.add("pinFast");
+
+    const fullSpins = 360 * 3;
+    const randomSpin = Math.floor(Math.random() * 360);
+    wheel.style.transform =
+      "rotate(" + (fullSpins + randomSpin) + "deg)";
+
+    setTimeout(()=>{
+      pin.classList.remove("pinFast");
+      pin.classList.add("pinSlow");
+    },1600);
+    setTimeout(()=>{ pin.classList.remove("pinSlow"); },2600);
+
+    lastPickedPlayer = state.lastPick.player;
+  }
+
+  // LAST PICK TEXT
+  if(state.lastPick){
+    playerName.innerText = state.lastPick.player;
+    teamName.innerText = "→ " + state.lastPick.team;
+  }
+
+  // END SEQUENCE
+  if(state.finished && !endSequenceStarted){
+    endSequenceStarted = true;
+
+    document.body.classList.add("freeze");
+
+    setTimeout(()=>{
+      spinWrap.style.display="none";
+      pin.style.display="none";
+      lastPick.style.display="none";
+
+      teams.classList.add("fadeOut");
+
+      const countdown = document.getElementById("countdown");
+      countdown.style.display="block";
+      let count = 3;
+      countdown.innerText = count;
+
+      const interval = setInterval(()=>{
+        count--;
+        if(count > 0){
+          countdown.innerText = count;
+        }else{
+          clearInterval(interval);
+          countdown.style.display="none";
+         teams.classList.remove("fadeOut");
+ 	teams.style.display="grid";
+          finished.style.display="block";
+        }
+      },1000);
+
+    },3000); // FREEZE 3s
+  }
+
+  // TEAMS RENDER
+  teams.innerHTML="";
+  state.teams.forEach(t=>{
+    teams.innerHTML+=`
+      <div class="team ${state.lastPick&&t.name===state.lastPick.team?'highlight':''}">
+        <h3>${t.name}</h3>
+        ${t.players.join("<br>")}
+      </div>`;
+  });
+
+},500);
+</script>
+
+</body>
+</html>

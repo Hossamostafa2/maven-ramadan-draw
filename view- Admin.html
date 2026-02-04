@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MAVEN Champions League – Countdown</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+/* ===== RESET ===== */
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+/* ===== SPLASH BACKGROUND ===== */
+.splash{
+  position:fixed;
+  inset:0;
+  background:
+    linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,.45)),
+    url("champions-bg.jpg") center/cover no-repeat;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+  color:#fff;
+}
+
+/* ===== CENTER CONTENT ===== */
+.center{
+  text-align:center;
+  animation:fadeIn 1.2s ease forwards;
+}
+
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(20px)}
+  to{opacity:1; transform:translateY(0)}
+}
+
+/* ===== COUNTDOWN ===== */
+.countdown{
+  display:flex;
+  gap:20px;
+  justify-content:center;
+}
+
+.countdown div{
+  background:rgba(12,35,64,.75);
+  backdrop-filter:blur(6px);
+  border-radius:16px;
+  padding:20px;
+  min-width:100px;
+}
+
+.countdown strong{
+  display:block;
+  font-size:42px;
+  color:#FA4C06;
+}
+
+.countdown span{
+  font-size:14px;
+  letter-spacing:1px;
+}
+
+/* ===== TEXT ===== */
+.soon{
+  margin-top:20px;
+  font-size:22px;
+  letter-spacing:1px;
+}
+
+/* ===== EXIT ANIMATION ===== */
+.splash.exit{
+  animation:exitSmooth 1.3s cubic-bezier(.4,0,.2,1) forwards;
+}
+
+@keyframes exitSmooth{
+  from{opacity:1; transform:scale(1)}
+  to{
+    opacity:0;
+    transform:scale(.95);
+    pointer-events:none;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- SPLASH -->
+<div id="splash" class="splash">
+  <div class="center">
+    <div class="countdown">
+      <div><strong id="d">0</strong><span>DAYS</span></div>
+      <div><strong id="h">0</strong><span>HOURS</span></div>
+      <div><strong id="m">0</strong><span>MINUTES</span></div>
+      <div><strong id="s">0</strong><span>SECONDS</span></div>
+    </div>
+    <div class="soon">
+      MAVEN Champions League<br>
+      Let the games begin
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== COUNTDOWN (DISPLAY ONLY) ===== */
+// عدّل التاريخ لو محتاج
+const EVENT_DATE = new Date("2026-03-02T20:00:00+02:00");
+
+const d = document.getElementById("d");
+const h = document.getElementById("h");
+const m = document.getElementById("m");
+const s = document.getElementById("s");
+const splash = document.getElementById("splash");
+
+function updateCountdown(){
+  const now = new Date();
+  const diff = EVENT_DATE - now;
+
+  if(diff <= 0){
+    d.innerText = 0;
+    h.innerText = 0;
+    m.innerText = 0;
+    s.innerText = 0;
+    return;
+  }
+
+  d.innerText = Math.floor(diff / (1000*60*60*24));
+  h.innerText = Math.floor((diff / (1000*60*60)) % 24);
+  m.innerText = Math.floor((diff / (1000*60)) % 60);
+  s.innerText = Math.floor((diff / 1000) % 60);
+}
+
+setInterval(updateCountdown,1000);
+updateCountdown();
+
+/* ===== ADMIN CONTROL + REDIRECT ===== */
+let redirected = false;
+const SPIN_PAGE = "spin.html";
+
+function startRedirect(){
+  if(redirected) return;
+  redirected = true;
+
+  splash.classList.add("exit");
+
+  setTimeout(()=>{
+    window.location.href = SPIN_PAGE;
+  },1300);
+}
+
+/* Listen to admin trigger */
+window.addEventListener("storage",(e)=>{
+  if(e.key === "START_EVENT" && e.newValue === "true"){
+    startRedirect();
+  }
+});
+
+/* Check once on load */
+if(localStorage.getItem("START_EVENT") === "true"){
+  startRedirect();
+}
+</script>
+
+</body>
+</html>
