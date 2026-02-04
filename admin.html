@@ -155,27 +155,32 @@ button{
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
-<script>
+
+
+<script type="module">
+import { initializeApp } from
+  "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* ===== FIREBASE CONFIG ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyA2kDRHbPh_gh6Bmij39LUKF1lBNhbfDxg",
+  authDomain: "maven-ramadan-draw.firebaseapp.com",
+  projectId: "maven-ramadan-draw"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 /* ===============================
-   INIT DRAW
+   INIT DRAW (Firebase)
 ================================ */
-async function initDraw(){
-  const teamsInput = ["Team A", "Team B"];
-  const playersInput = ["Ahmed", "Ali", "Omar"];
-
-  const teamsObj = {};
-  teamsInput.forEach(t => teamsObj[t] = []);
-
-  await setDoc(doc(db,"event","state"), {
-    started: false,
-    finished: false,
-    remainingPlayers: playersInput,
-    lastPick: null,
-    teams: teamsObj
-  });
-
-  alert("Draw Initialized in Firebase");
-function initDraw(){
+window.initDraw = async function(){
   const teams = document.getElementById("teamsInput").value
     .split("\n").map(t=>t.trim()).filter(Boolean);
 
@@ -187,39 +192,42 @@ function initDraw(){
     return;
   }
 
-  const state = {
-    teams: teams.map(t=>({ name:t, players:[] })),
+  const teamsObj = {};
+  teams.forEach(t => teamsObj[t] = []);
+
+  await setDoc(doc(db,"event","state"), {
+    started: false,
+    finished: false,
     remainingPlayers: players,
     lastPick: null,
-    finished: false
-  };
+    teams: teamsObj
+  });
 
-  localStorage.setItem("DRAW_STATE", JSON.stringify(state));
   alert("Draw Initialized");
-}
+};
 
 /* ===============================
-   PICK PLAYER
+   PICK PLAYER (Firebase)
 ================================ */
-async function pickPlayer(){
+window.pickPlayer = async function(){
   const ref = doc(db,"event","state");
   const snap = await getDoc(ref);
 
-  if(!snap.exists()) return;
-
-  const state = snap.data();
-
-  if(state.remainingPlayers.length === 0){
-    state.finished = true;
-    await setDoc(ref, state);
+  if(!snap.exists()){
+    alert("Draw not initialized");
     return;
   }
 
-  // random player
+  const state = snap.data();
+
+  if(state.finished){
+    alert("Draw already finished");
+    return;
+  }
+
   const index = Math.floor(Math.random() * state.remainingPlayers.length);
   const player = state.remainingPlayers.splice(index,1)[0];
 
-  // balanced team
   const teamName = Object.keys(state.teams)
     .sort((a,b)=>state.teams[a].length - state.teams[b].length)[0];
 
@@ -231,154 +239,17 @@ async function pickPlayer(){
   }
 
   await setDoc(ref, state);
-}
-
-function pickPlayer(){
-  const raw = localStorage.getItem("DRAW_STATE");
-  if(!raw){
-    alert("Initialize the draw first");
-    return;
-  }
-
-  const state = JSON.parse(raw);
-
-  const box = document.getElementById("adminStatus");
-  const title = document.getElementById("statusTitle");
-  const details = document.getElementById("statusDetails");
-  box.style.display = "block";
-
-  if(state.finished){
-    title.innerText = "🏁 DRAW FINISHED";
-    details.innerText = "The draw is already complete.";
-    return;
-  }
-
-  if(state.remainingPlayers.length === 0){
-    state.finished = true;
-    localStorage.setItem("DRAW_STATE", JSON.stringify(state));
-
-    title.innerText = "🏁 DRAW FINISHED";
-    details.innerText = "Last player assigned. Draw is complete.";
-    return;
-  }
-
-  /* 🎯 Random player */
-  const index = Math.floor(Math.random() * state.remainingPlayers.length);
-  const player = state.remainingPlayers.splice(index,1)[0];
-
-  /* ⚖️ Balanced teams */
-  state.teams.sort((a,b)=>a.players.length - b.players.length);
-  const team = state.teams[0];
-  team.players.push(player);
-
-  state.lastPick = {
-    player: player,
-    team: team.name
-  };
-
-  /* ✅ SHOW RESULT IN ADMIN */
-  title.innerText = "✅ PICK SUCCESS";
-  details.innerHTML =
-    `<strong>Player:</strong> ${player}<br>
-     <strong>Assigned to:</strong> ${team.name}`;
-
-  /* 🏁 لو ده آخر اختيار */
-  if(state.remainingPlayers.length === 0){
-    state.finished = true;
-
-    title.innerText = "🏁 DRAW FINISHED";
-    details.innerText = "Last player assigned. Draw is complete.";
-  /* ⭐ IMPORTANT PART */
-  if(state.remainingPlayers.length === 0){
-    state.finished = true;   // 👈 ده المفتاح
-  }
-  }
-
-  localStorage.setItem("DRAW_STATE", JSON.stringify(state));
-}
-
-  
-
-
-/* ===============================
-   START EVENT
-================================ */
-function startEvent(){
-  localStorage.setItem("START_EVENT","true");
-  alert("Event Started");
-}
-
-/* ===============================
-   END EVENT
-================================ */
-function endEvent(){
-  if(!confirm("End Event and return to splash?")) return;
-
-  localStorage.setItem("END_EVENT","true");
-  localStorage.removeItem("START_EVENT");
-}
-
-/* ===============================
-   PROTECTED RESTART
-================================ */
-function protectedRestart(){
-  const pass = prompt("Enter admin password");
-  if(pass !== "Hr@Maven2026"){
-    alert("Wrong password");
-    return;
-  }
-
-  if(!confirm("Reset everything?")) return;
-
-  localStorage.removeItem("DRAW_STATE");
-  localStorage.removeItem("START_EVENT");
-  localStorage.removeItem("END_EVENT");
-
-  alert("Draw reset");
-  location.reload();
-}
-</script>
-
-<script type="module">
-/* ===============================
-   FIREBASE INIT – ADMIN
-================================ */
-import { initializeApp } from
-  "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore,
-  doc,
-  setDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-/* 🔧 REPLACE WITH YOUR CONFIG */
-const firebaseConfig = {
-  apiKey: "AIzaSyA2kDRHbPh_gh6Bmij39LUKF1lBNhbfDxg",
-  authDomain: "maven-ramadan-draw.firebaseapp.com",
-  projectId: "maven-ramadan-draw"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-/* ▶️ START EVENT */
+/* ===============================
+   START / END EVENT
+================================ */
 window.startEvent = async function(){
-  await setDoc(doc(db,"event","state"), {
-    started: true,
-    ended: false
-  });
-  alert("Event Started – Viewer will redirect");
+  await setDoc(doc(db,"event","state"), { started:true }, { merge:true });
 };
 
-/* ⏹️ END EVENT */
 window.endEvent = async function(){
-  if(!confirm("End Event and return viewer to splash?")) return;
-
-  await setDoc(doc(db,"event","state"), {
-    started: false,
-    ended: true
-  });
-  alert("Event Ended");
+  await setDoc(doc(db,"event","state"), { ended:true }, { merge:true });
 };
 </script>
 
