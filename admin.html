@@ -201,6 +201,38 @@ function initDraw(){
 /* ===============================
    PICK PLAYER
 ================================ */
+async function pickPlayer(){
+  const ref = doc(db,"event","state");
+  const snap = await getDoc(ref);
+
+  if(!snap.exists()) return;
+
+  const state = snap.data();
+
+  if(state.remainingPlayers.length === 0){
+    state.finished = true;
+    await setDoc(ref, state);
+    return;
+  }
+
+  // random player
+  const index = Math.floor(Math.random() * state.remainingPlayers.length);
+  const player = state.remainingPlayers.splice(index,1)[0];
+
+  // balanced team
+  const teamName = Object.keys(state.teams)
+    .sort((a,b)=>state.teams[a].length - state.teams[b].length)[0];
+
+  state.teams[teamName].push(player);
+  state.lastPick = { player, team: teamName };
+
+  if(state.remainingPlayers.length === 0){
+    state.finished = true;
+  }
+
+  await setDoc(ref, state);
+}
+
 function pickPlayer(){
   const raw = localStorage.getItem("DRAW_STATE");
   if(!raw){
